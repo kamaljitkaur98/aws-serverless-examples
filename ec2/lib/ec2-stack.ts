@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage } from 'aws-cdk-lib/aws-ec2';
+import { Instance, InstanceClass, InstanceSize, InstanceType, MachineImage, UserData } from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
 import * as path from 'path';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -63,6 +63,20 @@ export class Ec2Stack extends cdk.Stack {
         init: initData
       }
     )
+
+    instance.userData.addCommands(
+      `#!/bin/bash
+       sudo dnf -y update;
+       sudo dnf -y install cronie;
+       sudo systemctl enable crond;
+       sudo systemctl start crond;
+       crontab -l > tmpfile;
+       echo "* * * * * python3 /home/ec2-user/simple.py >> /home/ec2-user/output.log 2>&1" >> tmpfile;
+       crontab tmpfile;
+       rm tmpfile
+      `
+    );
+    
 
     }
 }
